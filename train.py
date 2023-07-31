@@ -259,8 +259,8 @@ def main(
     for epoch in range(first_epoch, num_train_epochs):
         unet.train()
         train_loss = 0.0
-        for step, item in enumerate(train_dataloader):
-            for batch in item:
+        for step, batch in enumerate(train_dataloader):
+            for x in len(batch):
                 # Skip steps until we reach the resumed step
                 if resume_from_checkpoint and epoch == first_epoch and step < resume_step:
                     if step % gradient_accumulation_steps == 0:
@@ -269,7 +269,7 @@ def main(
 
                 with accelerator.accumulate(unet):
                     # Convert videos to latent space
-                    pixel_values = batch["pixel_values"].to(weight_dtype)
+                    pixel_values = batch[x]["pixel_values"].to(weight_dtype)
                     video_length = pixel_values.shape[1]
                     pixel_values = rearrange(pixel_values, "b f c h w -> (b f) c h w")
                     latents = vae.encode(pixel_values).latent_dist.sample()
@@ -288,7 +288,7 @@ def main(
                     noisy_latents = noise_scheduler.add_noise(latents, noise, timesteps)
 
                     # Get the text embedding for conditioning
-                    encoder_hidden_states = text_encoder(batch["prompt_ids"])[0]
+                    encoder_hidden_states = text_encoder(batch[x]["prompt_ids"])[0]
 
                     # Get the target for loss depending on the prediction type
                     if noise_scheduler.prediction_type == "epsilon":
