@@ -25,7 +25,7 @@ from tqdm.auto import tqdm
 from transformers import CLIPTextModel, CLIPTokenizer
 
 from animatediff.models.unet import UNet3DConditionModel
-from tuneavideo.data.dataset import TuneAVideoDataset
+from tuneavideo.data.multi_dataset import MultiTuneAVideoDataset
 from animatediff.pipelines.pipeline_animation import AnimationPipeline
 from tuneavideo.util import save_videos_grid, ddim_inversion
 from einops import rearrange
@@ -163,12 +163,15 @@ def main(
     )
 
     # Get the training dataset
-    train_dataset = TuneAVideoDataset(**train_data)
+    train_dataset = MultiTuneAVideoDataset(**train_data)
 
     # Preprocessing the dataset
-    train_dataset.prompt_ids = tokenizer(
-        train_dataset.prompt, max_length=tokenizer.model_max_length, padding="max_length", truncation=True, return_tensors="pt"
-    ).input_ids[0]
+    train_dataset.prompt_ids = []
+    for prompt in train_dataset.prompt:
+
+        train_dataset.prompt_ids.append(tokenizer(
+        prompt, max_length=tokenizer.model_max_length, padding="max_length", truncation=True, return_tensors="pt"
+        ).input_ids[0])
 
     # DataLoaders creation:
     train_dataloader = torch.utils.data.DataLoader(
