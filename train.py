@@ -327,30 +327,7 @@ def main(
                             save_checkpoint(unet, save_path)
                             logger.info(f"Saved state to {save_path}")
 
-                    if global_step % validation_steps == 0:
-                        if accelerator.is_main_process:
-                            samples = []
-                            generator = torch.Generator(device=latents.device)
-                            generator.manual_seed(seed)
-
-                            ddim_inv_latent = None
-                            if validation_data.use_inv_latent:
-                                inv_latents_path = os.path.join(output_dir, f"inv_latents/ddim_latent-{global_step}.pt")
-                                ddim_inv_latent = ddim_inversion(
-                                    validation_pipeline, ddim_inv_scheduler, video_latent=latents,
-                                    num_inv_steps=validation_data.num_inv_steps, prompt="")[-1].to(weight_dtype)
-                                torch.save(ddim_inv_latent, inv_latents_path)
-
-                            for idx, prompt in enumerate(validation_data.prompts):
-                                sample = validation_pipeline(prompt, generator=generator, latents=ddim_inv_latent,
-                                                             **validation_data).videos
-                                save_videos_grid(sample, f"{output_dir}/samples/sample-{global_step}/{idx}.gif")
-                                samples.append(sample)
-                            samples = torch.concat(samples)
-                            save_path = f"{output_dir}/samples/sample-{global_step}.gif"
-                            save_videos_grid(samples, save_path)
-                            logger.info(f"Saved samples to {save_path}")
-
+                    #verify my ass
                 logs = {"step_loss": loss.detach().item(), "lr": lr_scheduler.get_last_lr()[0]}
                 progress_bar.set_postfix(**logs)
 
